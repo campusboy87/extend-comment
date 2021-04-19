@@ -13,7 +13,7 @@ Author URI: https://wp-plus.ru/
 add_filter( 'comment_form_default_fields', 'extend_comment_default_fields' );
 function extend_comment_default_fields( $fields ) {
 
-	$fields['phone'] = '<p class="comment-form-phone">' .
+	$fields['phone'] = '<p class="comment-form-phone reply-hidden">' .
 	                   '<label for="phone">' . __( 'Phone' ) . '</label>' .
 	                   '<input id="phone" name="phone" type="text" size="30"/></p>';
 
@@ -25,11 +25,11 @@ add_action( 'comment_form_logged_in_after', 'extend_comment_custom_fields' );
 add_action( 'comment_form_after_fields', 'extend_comment_custom_fields' );
 function extend_comment_custom_fields() {
 
-	echo '<p class="comment-form-title">' .
+	echo '<p class="comment-form-title reply-hidden">' .
 	     '<label for="title">' . __( 'Comment Title' ) . '</label>' .
 	     '<input id="title" name="title" type="text" size="30"/></p>';
 
-	echo '<p class="comment-form-rating">' .
+	echo '<p class="comment-form-rating reply-hidden">' .
 	     '<label for="rating">' . __( 'Rating' ) . '<span class="required">*</span></label>
 			  <span class="commentratingbox">';
 
@@ -68,6 +68,10 @@ function save_extend_comment_meta_data( $comment_id ) {
 // Проверяем, заполнено ли поле "Рейтинг"
 add_filter( 'preprocess_comment', 'verify_extend_comment_meta_data' );
 function verify_extend_comment_meta_data( $commentdata ) {
+	// Если это ответ на комментарий, то отменяем остальные проверки, так как ответному комментариию рейтинг не нужен
+    if ( isset( $_REQUEST['action'] ) && $_REQUEST['action'] === 'replyto-comment' ) {
+		return $commentdata;
+	}
 
 	if ( empty( $_POST['rating'] ) || ! (int) $_POST['rating'] ) {
 		wp_die( __( 'Error: You did not add a rating. Hit the Back button on your Web browser and resubmit your comment with a rating.' ) );
@@ -111,6 +115,7 @@ function check_count_extend_comments() {
 		wp_enqueue_style( 'dashicons' );
 
 		$stars_css = '
+		.comment .reply-hidden { display: none }
 		.comment-form label.commentrating { display: inline-block }
 		.star-rating .star-full:before { content: "\f155"; }
 		.star-rating .star-half:before { content: "\f459"; }
@@ -135,10 +140,12 @@ function check_count_extend_comments() {
 	}
 }
 
-// Добавляем новый метабокс на страницу редактирования комментария
+// Добавляем новый метабокс на страницу редактирования комментария, если он не дочерний
 add_action( 'add_meta_boxes_comment', 'extend_comment_add_meta_box' );
-function extend_comment_add_meta_box() {
-	add_meta_box( 'title', __( 'Comment Metadata - Extend Comment' ), 'extend_comment_meta_box', 'comment', 'normal', 'high' );
+function extend_comment_add_meta_box( $comment ) {
+	if ( ! $comment->comment_parent ) {
+		add_meta_box( 'title', __( 'Comment Metadata - Extend Comment' ), 'extend_comment_meta_box', 'comment', 'normal', 'high' );
+	}
 }
 
 // Отображаем наши поля
