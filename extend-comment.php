@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: Расширенные комментарии
-Version: 1.1
+Version: 1.2
 Plugin URI: https://wp-kama.ru/?p=8342
 Description: Плагин, добавляющий произвольные поля в форму комментариев.
 Author: Campusboy
